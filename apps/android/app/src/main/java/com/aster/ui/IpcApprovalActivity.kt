@@ -106,7 +106,6 @@ class IpcApprovalActivity : ComponentActivity() {
     private var showSheet by mutableStateOf(true)
     private var showPermissionSheet by mutableStateOf(false)
     private var permissionResult by mutableStateOf<PermissionCheckResult?>(null)
-
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()

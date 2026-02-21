@@ -13,6 +13,7 @@ export const ReadSmsSchema = z.object({
   deviceId: z.string().describe('The unique identifier of the device'),
   limit: z.number().optional().default(20).describe('Maximum number of messages to fetch'),
   threadId: z.string().optional().describe('Filter by conversation thread ID'),
+  sinceDate: z.number().optional().describe('Only return messages with date >= this Unix timestamp (ms)'),
 });
 
 export const GetLocationSchema = z.object({
@@ -321,6 +322,7 @@ export const TOOL_DEFINITIONS = [
         deviceId: { type: 'string', description: 'The unique identifier of the device' },
         limit: { type: 'number', description: 'Maximum number of messages to fetch', default: 20 },
         threadId: { type: 'string', description: 'Filter by conversation thread ID' },
+        sinceDate: { type: 'number', description: 'Only return messages with date >= this Unix timestamp (ms)' },
       },
       required: ['deviceId'],
     },

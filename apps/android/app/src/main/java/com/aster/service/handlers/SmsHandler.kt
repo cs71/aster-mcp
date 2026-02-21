@@ -50,8 +50,10 @@ class SmsHandler(
         }
 
         val limit = command.params?.get("limit")?.jsonPrimitive?.intOrNull ?: 50
+        val offset = command.params?.get("offset")?.jsonPrimitive?.intOrNull ?: 0
         val threadId = command.params?.get("threadId")?.jsonPrimitive?.contentOrNull
         val type = command.params?.get("type")?.jsonPrimitive?.contentOrNull // "inbox", "sent", "all"
+        val sinceDate = command.params?.get("sinceDate")?.jsonPrimitive?.longOrNull
 
         val uri = when {
             threadId != null -> Uri.parse("$SMS_CONTENT_URI").buildUpon()
@@ -63,10 +65,15 @@ class SmsHandler(
         }
 
         return try {
-            val messages = querySms(uri, limit, threadId)
+            // Fetch limit+1 rows to detect whether more pages exist
+            val messages = querySms(uri, limit + 1, offset, threadId, sinceDate)
+            val hasMore = messages.size > limit
+            val page = if (hasMore) JsonArray(messages.take(limit)) else messages
             CommandResult.success(buildJsonObject {
-                put("messages", messages)
-                put("count", messages.size)
+                put("messages", page)
+                put("count", page.size)
+                put("offset", offset)
+                put("hasMore", hasMore)
             })
         } catch (e: Exception) {
             CommandResult.failure("Failed to read SMS: ${e.message}")
@@ -119,7 +126,7 @@ class SmsHandler(
         }
     }
 
-    private fun querySms(uri: Uri, limit: Int, threadId: String?): JsonArray {
+    private fun querySms(uri: Uri, limit: Int, offset: Int, threadId: String?, sinceDate: Long? = null): JsonArray {
         val projection = arrayOf(
             Telephony.Sms._ID,
             Telephony.Sms.ADDRESS,
@@ -133,15 +140,20 @@ class SmsHandler(
             Telephony.Sms.PERSON
         )
 
-        val selection = if (threadId != null) {
-            "${Telephony.Sms.THREAD_ID} = ?"
-        } else null
+        val conditions = mutableListOf<String>()
+        val args = mutableListOf<String>()
+        if (threadId != null) {
+            conditions.add("${Telephony.Sms.THREAD_ID} = ?")
+            args.add(threadId)
+        }
+        if (sinceDate != null) {
+            conditions.add("${Telephony.Sms.DATE} >= ?")
+            args.add(sinceDate.toString())
+        }
+        val selection = if (conditions.isNotEmpty()) conditions.joinToString(" AND ") else null
+        val selectionArgs = if (args.isNotEmpty()) args.toTypedArray() else null
 
-        val selectionArgs = if (threadId != null) {
-            arrayOf(threadId)
-        } else null
-
-        val sortOrder = "${Telephony.Sms.DATE} DESC LIMIT $limit"
+        val sortOrder = "${Telephony.Sms.DATE} DESC LIMIT $limit OFFSET $offset"
 
         val cursor: Cursor? = context.contentResolver.query(
             uri,

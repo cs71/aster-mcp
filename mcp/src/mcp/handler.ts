@@ -291,8 +291,8 @@ async function handleReadNotifications(args: Record<string, unknown>): Promise<T
 }
 
 async function handleReadSms(args: Record<string, unknown>): Promise<ToolResult> {
-  const { deviceId, limit, threadId } = ReadSmsSchema.parse(args);
-  const response = await sendCommand(deviceId, 'read_sms', { limit, threadId });
+  const { deviceId, limit, threadId, sinceDate } = ReadSmsSchema.parse(args);
+  const response = await sendCommand(deviceId, 'read_sms', { limit, threadId, sinceDate });
   return jsonResult(response.data);
 }
 
