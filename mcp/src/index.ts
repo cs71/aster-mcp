@@ -114,6 +114,11 @@ export async function startServer(overrides: Partial<ServerConfig> = {}): Promis
     commandTimeout: parseInt(process.env.COMMAND_TIMEOUT || '30000', 10),
     heartbeatInterval: parseInt(process.env.HEARTBEAT_INTERVAL || '30000', 10),
     heartbeatTimeout: parseInt(process.env.HEARTBEAT_TIMEOUT || '90000', 10),
+    bindHost: process.env.BIND_HOST || '127.0.0.1',
+    apiToken: process.env.API_TOKEN || process.env.ASTER_API_TOKEN,
+    corsOrigin: process.env.CORS_ORIGIN,
+    allowTokenPrefill: process.env.ALLOW_TOKEN_PREFILL === 'true',
+    deviceAuthToken: process.env.DEVICE_AUTH_TOKEN || process.env.ASTER_DEVICE_AUTH_TOKEN,
     ...overrides,
   });
 
@@ -206,6 +211,11 @@ export async function startMcp(): Promise<void> {
     commandTimeout: parseInt(process.env.COMMAND_TIMEOUT || '30000', 10),
     heartbeatInterval: parseInt(process.env.HEARTBEAT_INTERVAL || '30000', 10),
     heartbeatTimeout: parseInt(process.env.HEARTBEAT_TIMEOUT || '90000', 10),
+    bindHost: process.env.BIND_HOST || '127.0.0.1',
+    apiToken: process.env.API_TOKEN || process.env.ASTER_API_TOKEN,
+    corsOrigin: process.env.CORS_ORIGIN,
+    allowTokenPrefill: process.env.ALLOW_TOKEN_PREFILL === 'true',
+    deviceAuthToken: process.env.DEVICE_AUTH_TOKEN || process.env.ASTER_DEVICE_AUTH_TOKEN,
   });
 
   // Initialize database

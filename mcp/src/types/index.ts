@@ -92,6 +92,7 @@ export const AuthMessageSchema = z.object({
   platform: z.enum(['android', 'ios']),
   osVersion: z.string(),
   appVersion: z.string(),
+  authToken: z.string().optional(),
 });
 
 export type AuthMessage = z.infer<typeof AuthMessageSchema>;
@@ -197,6 +198,11 @@ export const ServerConfigSchema = z.object({
   commandTimeout: z.number().default(30000),
   heartbeatInterval: z.number().default(30000),
   heartbeatTimeout: z.number().default(90000),
+  bindHost: z.string().default('127.0.0.1'),
+  apiToken: z.string().optional(),
+  corsOrigin: z.string().optional(),
+  allowTokenPrefill: z.boolean().default(false),
+  deviceAuthToken: z.string().optional(),
 });
 
 export type ServerConfig = z.infer<typeof ServerConfigSchema>;

@@ -83,7 +83,7 @@ export async function sendCommand(
 }
 
 export function createWebSocketServer(config: ServerConfig): WebSocketServer {
-  const wss = new WebSocketServer({ port: config.wsPort });
+  const wss = new WebSocketServer({ port: config.wsPort, host: config.bindHost || '127.0.0.1' });
 
   consola.info(`WebSocket server listening on port ${config.wsPort}`);
 
@@ -268,7 +268,19 @@ function handleAuth(
   setHeartbeatInterval: (interval: NodeJS.Timeout) => void,
   config: ServerConfig
 ): void {
-  const { deviceId, deviceName, model, manufacturer, platform, osVersion } = authMsg;
+  const { deviceId, deviceName, model, manufacturer, platform, osVersion, authToken } = authMsg;
+
+  if (config.deviceAuthToken && authToken !== config.deviceAuthToken) {
+    consola.warn(`Rejected device ${deviceId}: invalid auth token`);
+    ws.send(JSON.stringify({
+      type: 'auth_result',
+      success: false,
+      status: 'rejected',
+      message: 'Invalid device auth token',
+    }));
+    ws.close(4004, 'Invalid auth token');
+    return;
+  }
 
   // Check if device exists
   let device = getDevice(deviceId);

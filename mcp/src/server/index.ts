@@ -25,14 +25,31 @@ export function createApiServer(config: ServerConfig) {
     logger: false,
   });
 
-  // CORS for dashboard
+  // CORS + optional API auth
   app.addHook('onRequest', async (request, reply) => {
-    reply.header('Access-Control-Allow-Origin', '*');
+    const allowedOrigin = config.corsOrigin || '';
+    const reqOrigin = String(request.headers.origin || '');
+    if (allowedOrigin && reqOrigin && reqOrigin === allowedOrigin) {
+      reply.header('Access-Control-Allow-Origin', allowedOrigin);
+    }
+    reply.header('Vary', 'Origin');
     reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    reply.header('Access-Control-Allow-Headers', 'Content-Type');
+    reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (request.method === 'OPTIONS') {
       reply.status(204).send();
+      return;
+    }
+
+    const url = request.url || '';
+    const protectedPath = url.startsWith('/api/') || url.startsWith('/mcp');
+    if (protectedPath && config.apiToken) {
+      const auth = String(request.headers.authorization || '');
+      const expected = `Bearer ${config.apiToken}`;
+      if (auth !== expected) {
+        reply.status(401).send({ error: 'Unauthorized' });
+        return;
+      }
     }
   });
 
@@ -177,8 +194,12 @@ export function createApiServer(config: ServerConfig) {
     };
   });
 
-  // Pre-fill token from ~/.openclaw/openclaw.json (local use only)
-  app.post('/api/openclaw/prefill-token', async () => {
+  // Pre-fill token from ~/.openclaw/openclaw.json (disabled by default)
+  app.post('/api/openclaw/prefill-token', async (request, reply) => {
+    if (!config.allowTokenPrefill) {
+      reply.status(403);
+      return { error: 'Token prefill disabled' };
+    }
     const token = getOpenClawSourceToken();
     return { token: token || null };
   });
@@ -267,6 +288,6 @@ export async function startApiServer(config: ServerConfig): Promise<void> {
     }
   );
 
-  await app.listen({ port: config.dashboardPort, host: '0.0.0.0' });
+  await app.listen({ port: config.dashboardPort, host: config.bindHost || '127.0.0.1' });
   consola.success(`API server listening on port ${config.dashboardPort}`);
 }

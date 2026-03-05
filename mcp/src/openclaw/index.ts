@@ -161,7 +161,7 @@ export async function forwardEventToOpenClaw(
     headers['Authorization'] = `Bearer ${config.token}`;
   }
 
-  consola.info(`OpenClaw POST ${url} →`, JSON.stringify(payload));
+  consola.info(`OpenClaw POST ${url} → event=${eventType} channel=${config.channel || 'default'}`);
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
